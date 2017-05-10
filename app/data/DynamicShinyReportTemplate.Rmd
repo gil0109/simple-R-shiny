@@ -1,0 +1,134 @@
+---
+title: "BC Public Service Work Environment Survey 2015 Year-to-Year State of Engagement"
+output: html_document
+params:
+  Organization: 
+    label: "ORGID15"
+    value: all
+    input: select
+    choices: [all, AG, AGRI, BCPSA, EBC, ENV, FIN, FLNR, GCPE, NGD, PGT, PO, PSSG, SDSI, TICS]
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(car)
+library(pander)
+
+knitr::opts_chunk$set(echo = TRUE)
+
+#--------------- Set up the data for the RMD file ---------------
+
+WES_data <- read_csv("finalMockData.csv", 
+                          col_types = cols(COMMITMENT13 = col_number(), 
+                                           COMMITMENT15 = col_number(),
+                                           SAT13 = col_number(), 
+                                           SAT15 = col_number()))
+
+# Very basic input error checking
+if (params$Organization != "all" &&
+    !params$Organization %in% unique(WES_data$ORGID15)) {
+  stop(paste0("The organization you provided is not in the data: ",
+              params$Organization))
+}
+
+# Start the process to turn the data into what is needed to create a combined dataset
+
+## Turn "Wide" data (where time is delineated by different variables) into "Long" data (where there is a variable
+### for time called 'Year') 
+
+longData <- WES_data %>% select(ORGID13,ORGANIZATION13,ORGID15,ORGANIZATION15, ENGSTATE13, ENGSTATE15) %>% 
+  gather(Year, EngagementScore, ENGSTATE13:ENGSTATE15)
+
+longData <- longData %>% mutate(Yr = ifelse(Year == "ENGSTATE13", "2013", "2015" ))
+
+## Turn engagement score into a factor variable and recode to text labels
+
+longData <- longData %>% mutate(EngagementScore = ifelse(Yr=="2013" & !is.na(ORGID13) & is.na(EngagementScore), "Non Respondents",
+                                                         ifelse(Yr=="2015" & !is.na(ORGID15) & is.na(EngagementScore), "Non Respondents", EngagementScore)))
+
+longData$EngagementScore <- factor(longData$EngagementScore,
+                                   levels=
+                                     c("Engaged", "Happily Detached", "Unhappily Dedicated", "Disengaged", "Non Respondents"))
+
+
+## Loop to generate engagement state tables for all ministries:
+
+for (i in unique(longData$ORGID15))
+{
+  assign(paste(i), longData %>% 
+           filter(ORGID15==i | ORGID13==i) %>% 
+           group_by(EngagementScore) %>% 
+           summarize(Count2013 = sum(Yr=="2013" & ORGID13==i & !is.na(EngagementScore)), 
+                     Count2015 = sum(Yr=="2015" & ORGID15==i & !is.na(EngagementScore))) %>% 
+           mutate(NetGainOrLoss = Count2015 - Count2013) %>% 
+           mutate(PercentageChange = ((Count2015-Count2013)/(Count2013))* 100))
+}
+
+all <- longData %>%
+  group_by(EngagementScore) %>% 
+  summarize(Count2013 = sum(Yr=="2013" & !is.na(EngagementScore)), 
+                     Count2015 = sum(Yr=="2015" & !is.na(EngagementScore))) %>% 
+           mutate(NetGainOrLoss = Count2015 - Count2013) %>% 
+           mutate(PercentageChange = ((Count2015-Count2013)/(Count2013))* 100)
+
+## Combine all the organization state tables very inelegantly
+
+### Uncomment this when plugging in real data, and comment the proceeding block of code instead
+
+# combinedStates <- bind_rows(all=all,AG=AG,AGRI=AGRI,ARR=ARR,AVED=AVED,BCPSA=BCPSA,
+#                             CFD=CFD,CSCD=CSCD,EAO=EAO,EBC=EBC,EDUC=EDUC,EM=EM,
+#                             EMBC=EMBC,ENV=ENV,FIN=FIN,FLNR=FLNR,GCPE=GCPE,HLTH=HLTH,
+#                             JTSTL=JTSTL,MIT=MIT,NGD=NGD,OMB=OMB,PGT=PGT,PO=PO,
+#                             PSSG=PSSG,SBRT=SBRT,SDSI=SDSI,TICS=TICS,TRAN=TRAN, .id="source")
+
+combinedStates <- bind_rows(all=all,AG=AG,AGRI=AGRI,BCPSA=BCPSA,
+                            EBC=EBC,ENV=ENV,FIN=FIN,FLNR=FLNR,GCPE=GCPE,NGD=NGD,
+                            PGT=PGT,PO=PO,PSSG=PSSG,SDSI=SDSI,TICS=TICS, .id="source")
+
+### Clean up the table, and append organizational names with the tables
+
+combinedStates <- combinedStates %>% filter(!is.na(EngagementScore))
+combinedStates <- rename(combinedStates, ORGID15 = source)
+
+OrgNameID <- longData %>% filter(!is.na(ORGID15)) %>% group_by(ORGID15,ORGANIZATION15) %>% summarise()
+OrgNameID <- rbind(as.data.frame(OrgNameID), c("all","all"))
+
+combinedStates <- inner_join(combinedStates, OrgNameID %>% select(ORGANIZATION15, ORGID15), by = "ORGID15")
+combinedStates <- combinedStates %>% mutate(PercentageChange = round(PercentageChange,digits=2))
+
+
+
+IndexOrgName <- combinedStates %>% filter(ORGID15==params$Organization) %>% select(ORGANIZATION15) %>% distinct()
+ 
+
+```
+
+## `r IndexOrgName`
+
+The purpose of this summary is to show how the state of engagement has changed in the organization between the 2013 and 2015 survey cycles
+
+### How has the state of engagement changed?
+
+The table below shows the overall number of employees in each state from both survey cycles.
+
+```{r, echo = FALSE}
+
+
+kable(combinedStates %>% filter(ORGID15==params$Organization), caption = "Table 1: Organizational Engagement State", digits = 2, 
+      col.names = c("ID","Engagement", "Count 2013", "Count 2015", "Gain/Loss", "Change (%)", "Organization"), 
+      align = c("l","l","c","c","c","c","l"))
+
+# Creating a function to use for the paragraph below 
+
+NetChange <- function(variable) 
+{
+combinedStates %>% filter(ORGID15==params$Organization) %>% filter(EngagementScore==variable) %>% select(NetGainOrLoss)
+}
+
+```
+
+
+Since 2013, the organization has had a net `r ifelse((NetChange("Engaged"))>0,"gain of", ifelse((NetChange("Engaged"))<0,"loss of","change of"))` **`r abs((NetChange("Engaged")))`** engaged employees and a net `r ifelse((NetChange("Disengaged"))>0,"gain of", ifelse((NetChange("Disengaged"))<0,"loss of","change of"))` **`r abs((NetChange("Disengaged")))`** disengaged employees.
