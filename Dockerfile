@@ -107,9 +107,7 @@ RUN wget --no-verbose https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubu
 ENV R_LIBS "${RLIBS}"
 RUN if [ "$R_LIBS" ]; \
    then \
-   install2.r --error $R_LIBS && \
-   R -e "install.packages('DT')" && \
-   R -e "install.packages('car')" ; \
+   install2.r --error $R_LIBS
    fi
 
 # --------------------------------------------------------
