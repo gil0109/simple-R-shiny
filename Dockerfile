@@ -107,7 +107,8 @@ ENV R_LIBS "${RLIBS}"
 RUN if [ "$R_LIBS" ]; \
    then \
    install2.r --error $R_LIBS && \
-   R -e "install.packages(c('DT', 'networkD3', 'readr', 'car', 'pander'))"; \
+   R -e "install.packages('DT')" && \
+   R -e "install.packages('car')" ; \
    fi
 
 # --------------------------------------------------------
@@ -178,4 +179,5 @@ RUN mkdir /srv/shiny-server/output/ && \
 # -----------------------------------------
 #USER shiny
 #CMD ["shiny-server"]
+
 CMD ["/usr/bin/shiny-server.sh"]
