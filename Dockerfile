@@ -85,6 +85,7 @@ RUN apt-get update && apt-get install -y -t unstable \
 #
 # --------------------------------------------------------
 RUN install2.r --error shiny rmarkdown
+RUN install2.r --error DT
 
 # --------------------------------------------------------
 #
