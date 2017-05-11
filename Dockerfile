@@ -107,7 +107,7 @@ ENV R_LIBS "${RLIBS}"
 RUN if [ "$R_LIBS" ]; \
    then \
    install2.r --error $R_LIBS; \
-   R -e "install.packages('DT', 'networkD3', 'readr', 'car', 'pander')"; \
+   R -e "install.packages(c('DT', 'networkD3', 'readr', 'car', 'pander'))"; \
    fi
 
 # --------------------------------------------------------
