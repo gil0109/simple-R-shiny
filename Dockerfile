@@ -107,6 +107,7 @@ ENV R_LIBS "${RLIBS}"
 RUN if [ "$R_LIBS" ]; \
    then \
    install2.r --error $R_LIBS; \
+   R -e "install.packages('DT', 'networkD3', 'readr', 'car', 'pander')"; \
    fi
 
 # --------------------------------------------------------
@@ -118,6 +119,7 @@ RUN if [ "$R_GH_LIBS" ]; \
    install2.r --error remotes && \
    R -e "remotes::install_github('$R_GH_LIBS')"; \
    fi
+
 
 # --------------------------------------------------------
 #
