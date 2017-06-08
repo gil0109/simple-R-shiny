@@ -5,6 +5,21 @@
 # -----------------------------------------
 FROM debian:testing
 ADD tools/rootfs.tar.xz /
+# --------------------------------------------------------
+# 
+# Allow Sharepoint Access
+ENV DAVFS2ID "${DAVFS2ID}"
+ENV DAVFS2PWD "${DAVFS2ID}"
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2 \
+    openssl \
+    libssl1.0.0 \
+COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
+RUN echo "https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test $DAVFS2ID $DAVFS2PWD" >> /etc/davfs2/secrets
+RUN mkdir /tmp/karim
+RUN mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test /tmp/karim
+#
+#
 # -----------------------------------------
 #
 # FROM R-BASE
@@ -58,20 +73,6 @@ RUN apt-get update \
     && install.r docopt \
     && rm -rf /tmp/downloaded_packages/ /tmp/*.rds \
     && rm -rf /var/lib/apt/lists/*
-# --------------------------------------------------------
-# 
-# Allow Sharepoint Access
-ENV DAVFS2ID "${DAVFS2ID}"
-ENV DAVFS2PWD "${DAVFS2ID}"
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2 \
-    openssl 
-COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
-RUN echo "https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test $DAVFS2ID $DAVFS2PWD" >> /etc/davfs2/secrets
-RUN mkdir /tmp/karim
-RUN mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test /tmp/karim
-#
-#
 # --------------------------------------------------------
 #
 # Install all the pre-reqs (and optional supplied in system-libraries.txt)
