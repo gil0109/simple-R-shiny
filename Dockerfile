@@ -58,7 +58,20 @@ RUN apt-get update \
     && install.r docopt \
     && rm -rf /tmp/downloaded_packages/ /tmp/*.rds \
     && rm -rf /var/lib/apt/lists/*
-
+# --------------------------------------------------------
+# 
+# Allow Sharepoint Access
+ENV DAVFS2ID "${DAVFS2ID}"
+ENV DAVFS2PWD "${DAVFS2ID}"
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2 \
+    openssl 
+COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
+RUN echo "https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test $DAVFS2ID $DAVFS2PWD" >> /etc/davfs2/secrets
+RUN mkdir /tmp/karim
+RUN mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test /tmp/karim
+#
+#
 # --------------------------------------------------------
 #
 # Install all the pre-reqs (and optional supplied in system-libraries.txt)
@@ -76,7 +89,6 @@ RUN apt-get update && apt-get install -y -t unstable \
     libxt-dev \
     libnss-wrapper \
     gettext $SYS_LIBS
-
 # --------------------------------------------------------
 # 
 # Allow Sharepoint Access
@@ -96,7 +108,6 @@ RUN mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/Strate
 #
 # --------------------------------------------------------
 RUN install2.r --error shiny rmarkdown
-
 # --------------------------------------------------------
 #
 # Download and install shiny server
