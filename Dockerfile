@@ -168,7 +168,14 @@ RUN chmod a+x /usr/bin/run-test.sh
 COPY app/ /srv/shiny-server/
 RUN mkdir /srv/shiny-server/output/ && \
     chown -R shiny:shiny /srv/shiny-server/
-
+#---------------------------------------------------------
+# 
+# Allow Sharepoint Access
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2
+COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
+#
+#
 # --------------------------------------------------------
 #
 # run the server
