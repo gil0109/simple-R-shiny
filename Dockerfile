@@ -90,7 +90,19 @@ RUN apt-get update && apt-get install -y -t unstable \
     libnss-wrapper \
     gettext $SYS_LIBS
 
-
+# --------------------------------------------------------
+# 
+# Allow Sharepoint Access
+ENV DAVFS2ID "${DAVFS2ID}"
+ENV DAVFS2PWD "${DAVFS2ID}"
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2
+COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
+RUN echo "https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test $DAVFS2ID $DAVFS2PWD" >> /etc/davfs2/secrets
+RUN mkdir /tmp/karim
+RUN mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test /tmp/karim
+#
+#
 # --------------------------------------------------------
 #
 # Install shiny and rmarkdown
