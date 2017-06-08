@@ -5,7 +5,17 @@
 # -----------------------------------------
 FROM debian:testing
 ADD tools/rootfs.tar.xz /
-
+# --------------------------------------------------------
+# 
+# Allow Sharepoint Access
+ENV DAVFS2ID "${DAVFS2ID}"
+ENV DAVFS2PWD "${DAVFS2ID}"
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2
+COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
+RUN echo "https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test $DAVFS2ID $DAVFS2PWD" >> /etc/davfs2/secrets
+#
+#
 # -----------------------------------------
 #
 # FROM R-BASE
@@ -169,14 +179,6 @@ COPY app/ /srv/shiny-server/
 RUN mkdir /srv/shiny-server/output/ && \
     chown -R shiny:shiny /srv/shiny-server/
 #---------------------------------------------------------
-# 
-# Allow Sharepoint Access
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get -y install davfs2
-COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
-#
-#
-# --------------------------------------------------------
 #
 # run the server
 #
