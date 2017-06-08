@@ -15,7 +15,7 @@ RUN apt-get update \
 COPY tools/davfs2.conf  /etc/davfs2/davfs2.conf
 RUN echo "https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test $DAVFS2ID $DAVFS2PWD" >> /etc/davfs2/secrets
 RUN mkdir /tmp/karim
-RUN mount mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test /tmp/karim
+RUN mount.davfs -o users,file_mode=775,dir_mode=775 https://sbc.gov.bc.ca/StrategicSupportServices/SCH/Test /tmp/karim
 #
 #
 # -----------------------------------------
